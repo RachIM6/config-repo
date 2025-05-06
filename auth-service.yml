@@ -1,0 +1,52 @@
+keycloak:
+  realm: Schools_Management
+  domain: http://localhost:8080
+  client-uuid: e737045f-f7f1-4b1e-83f3-1aa71425b9f3
+  webhook-secret: Gq+zAzDljAtSWKC0gD9i8azCYAcXqUB3gsuOo4x+bDo=
+  events:
+    enabled: true
+  ssl-required: external
+  adminClientId: school-management
+  adminClientSecret: e1LQnjLrUPXhnbAFeufkAkpUkYhpieNu
+  client-id: school-management
+  urls:
+    auth: ${keycloak.domain}
+  use-resource-role-mappings: true
+  bearer-only: true
+
+
+# Application specific configurations
+app:
+  student-domain: ${APP_STUDENT_DOMAIN:gmail.com}  # The domain for student emails (DOMAIN_ETU)
+
+# Logging configuration
+logging:
+  level:
+    org.springframework.security: DEBUG
+    com.schoolmanagement: INFO
+
+# Database configuration
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5433/users_db
+    username: root
+    password: root
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+  # parse the roles from JWT
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost:8080/realms/Schools_Management/protocol/openid-connect/certs
+          issuer-uri: http://localhost:8080/realms/Schools_Management
+          authorities-claim-name: realm_access.roles
+          authority-prefix: ROLE_
+jwt:
+  secret: e1LQnjLrUPXhnbAFeufkAkpUkYhpieNu
+
+server:
+  port: 8081

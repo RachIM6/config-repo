@@ -1,0 +1,81 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5436/document_db
+    username: root
+    password: root
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 2
+  jpa:
+    properties:
+      hibernate:
+        default_schema: requests
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 40MB
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_URL:http://localhost:8080}/realms/${KEYCLOAK_REALM:Schools_Management}
+          jwk-set-uri: ${KEYCLOAK_URL:http://localhost:8080}/realms/${KEYCLOAK_REALM:Schools_Management}/protocol/openid-connect/certs
+          authorities-claim-name: authorities  # Match the claim name in JWT
+          authority-prefix: ""  # Remove default ROLE_ prefix
+
+  # Redis configuration
+  redis:
+    host: localhost  # Change to your Redis host
+    port: 6379       # Change to your Redis port
+
+    cache:
+      type: redis
+
+minio:
+  url: http://localhost:9000
+  access-key: ${MINIO_ACCESS_KEY:43epZTN68TY1gaOiU5s1}
+  secret-key: ${MINIO_SECRET_KEY:we0IohbSSunpPbI72Xoqj6yiceKzpOBGNjTbNII3}
+  bucket: student-requests
+
+clamav:
+  host: localhost
+  port: 3310
+  timeout: 10000
+
+app:
+  upload:
+    dir: ./Desktop/uploads
+  max-file-size: 60MB
+  max-request-size: 100MB
+
+jwt:
+  secret: e1LQnjLrUPXhnbAFeufkAkpUkYhpieNu
+
+logging:
+  level:
+    root: INFO
+    com.example: DEBUG
+    org.springframework: WARN
+    # Add debug logging for bucket4j to see connection issues
+    com.bucket4j: DEBUG
+    org.springframework.security: DEBUG
+    com.auth: TRACE
+
+bucket4j:
+  enabled: false
+  filters:
+    - cache-name: rate-limit-buckets
+      url: .*
+      strategy: first
+      http-response-body: "{ \"status\": 429, \"error\": \"Too Many Requests\" }"
+      rate-limits:
+        - expression: "@securityService.getUsername()"
+          bandwidths:
+            - capacity: 20
+              time: 1
+              unit: minutes
+server:
+  port: 8087

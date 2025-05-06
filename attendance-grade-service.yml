@@ -1,0 +1,83 @@
+# Updated application.yml with Feign configuration
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5435/attendanceandgrade_db}
+    username: ${SPRING_DATASOURCE_USERNAME:root}
+    password: ${SPRING_DATASOURCE_PASSWORD:root}
+  jpa:
+    show-sql: true
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        transaction.jta.platform: none
+        format_sql: true
+        use_sql_comments: true
+  web:
+    resources:
+      add-mappings: false
+
+  cloud:
+    compatibility-verifier:
+      enabled: false
+
+
+course:
+  service:
+    url: "http://localhost:8082"
+#    url: ${COURSE_SERVICE_URL:http://course-service:8083}  # Added Feign client configuration
+
+services:
+  auth:
+    url: http://localhost:8081
+
+# Security configuration remains unchanged
+security:
+  oauth2:
+    resourceserver:
+      jwt:
+        jwk-set-uri: http://keycloak:8080/realms/Schools_Management
+        authorities-claim-name: realm_access.roles
+        authority-prefix: ROLE_
+
+server:
+  error:
+    include-binding-errors: always
+    include-message: always
+    include-exception: true
+  servlet:
+    context-path: /api
+  port: 8084
+
+# Rest of the configuration remains the same
+logging:
+  level:
+    org.springframework.security: INFO
+    com.schoolmanagement: DEBUG
+    org.keycloak: INFO
+    root: INFO
+    com.auth.attendanceandgradeservice: DEBUG
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+
+keycloak:
+  realm: ${KEYCLOAK_REALM}
+  webhook-secret: ${KEYCLOAK_WEBHOOK_SECRET}
+  adminClientId: ${KEYCLOAK_ADMINCLIENTID}
+  adminClientSecret: ${KEYCLOAK_ADMINCLIENTSECRET}
+  urls:
+    auth: ${KEYCLOAK_URLS_AUTH}
+
+app:
+  time:
+    zone: "UTC+1"
+  # New feature flags
+  features:
+    grade-publishing:
+      enabled: true
+    course-service-integration:
+      enabled: true

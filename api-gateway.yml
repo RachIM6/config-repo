@@ -1,0 +1,73 @@
+server:
+  port: 8090
+
+spring:
+  application:
+    name: api-gateway
+  config:
+    import: configserver:http://localhost:8888
+  cloud:
+    config:
+      enabled: true
+      fail-fast: true  # Fail if config server is not available
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: auth-service
+          uri: lb://auth-service
+          predicates:
+            - Path=/api/auth/**
+          filters:
+            - StripPrefix=2
+            - RateLimit=5,10,60s # 5 requests per 10 seconds per user
+
+        - id: grade-attendance-service
+          uri: lb://grade-attendance-service  # Service name in Eureka
+          predicates:
+            - Path=/api/(grades|attendances)/**  # Match both endpoints
+          filters:
+            - StripPrefix=1  # Remove "/api" prefix
+            - RateLimit=10,60,60s
+
+        - id: document-service
+          uri: lb://document-service
+          predicates:
+            - Path=/api/documents/**
+          filters:
+            - StripPrefix=2
+
+        - id: discovery-service
+          uri: lb://discovery-service
+          predicates:
+            - Path=/eureka/**
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${KEYCLOAK_URL:http://localhost:8080}/realms/${KEYCLOAK_REALM:Schools_Management}/protocol/openid-connect/certs
+
+  data:
+    redis:
+      port: 6379
+      host: localhost
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://adminDisc:adminDisc@localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    preferIpAddress: true
+    leaseRenewalIntervalInSeconds: 10
+    health-check-url-path: /actuator/health
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
