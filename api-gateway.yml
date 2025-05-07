@@ -17,16 +17,24 @@ spring:
           predicates:
             - Path=/api/auth/**
           filters:
-            - StripPrefix=2
-            - RateLimit=5,10,60s # 5 requests per 10 seconds per user
+          - StripPrefix=2
+          - name: RequestRateLimiter
+            args:
+              redis-rate-limiter.replenishRate: 5
+              redis-rate-limiter.burstCapacity: 10
+              key-resolver: "#{@ipKeyResolver}"
 
         - id: grade-attendance-service
           uri: lb://grade-attendance-service  # Service name in Eureka
           predicates:
             - Path=/api/(grades|attendances)/**  # Match both endpoints
           filters:
-            - StripPrefix=1  # Remove "/api" prefix
-            - RateLimit=10,60,60s
+            - StripPrefix=1
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 60
+                key-resolver: "#{@ipKeyResolver}"
 
         - id: document-service
           uri: lb://document-service
@@ -34,7 +42,11 @@ spring:
             - Path=/api/documents/**
           filters:
             - StripPrefix=2
-
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 5
+                redis-rate-limiter.burstCapacity: 10
+                key-resolver: "#{@ipKeyResolver}"
         - id: discovery-service
           uri: lb://discovery-service
           predicates:
