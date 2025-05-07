@@ -2,10 +2,6 @@ server:
   port: 8090
 
 spring:
-  application:
-    name: api-gateway
-  config:
-    import: configserver:http://localhost:8888
   cloud:
     config:
       enabled: true
@@ -71,3 +67,24 @@ management:
     web:
       exposure:
         include: '*'
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      userServiceCircuitBreaker:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 5s
+        failureRateThreshold: 50
+        eventConsumerBufferSize: 10
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.security.oauth2: DEBUG
+    ma.emsi.lpri: DEBUG  # Your package name
+    # Add for specific converters
+    org.springframework.security.oauth2.server.resource.authentication: TRACE
