@@ -38,13 +38,17 @@ spring:
       ddl-auto: update
     show-sql: true
   mail:
-    host: localhost  # Connect via host machine
-    port: 1025       # Mailpit's published SMTP port
+    host: localhost
+    port: 1025
+    protocol: smtp
     properties:
       mail:
         smtp:
           auth: false
           starttls.enable: false
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
 management:
   health:
     mail:
