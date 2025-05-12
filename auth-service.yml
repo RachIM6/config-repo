@@ -49,10 +49,6 @@ spring:
           connectiontimeout: 5000
           timeout: 5000
           writetimeout: 5000
-management:
-  health:
-    mail:
-      enabled: false
 
   # parse the roles from JWT
   security:
@@ -66,5 +62,10 @@ management:
 jwt:
   secret: e1LQnjLrUPXhnbAFeufkAkpUkYhpieNu
 
+management:
+  health:
+    mail:
+      enabled: false
+      
 server:
   port: 8081
