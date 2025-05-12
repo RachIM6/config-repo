@@ -16,12 +16,14 @@ spring:
           uri: lb://auth-service
           predicates:
             - Path=/api/auth/**
+            - Path=/api/teachers/**
+            - Method=GET,POST,PUT,DELETE
           filters:
           - StripPrefix=2
           - name: RequestRateLimiter
             args:
-              redis-rate-limiter.replenishRate: 5
-              redis-rate-limiter.burstCapacity: 10
+              redis-rate-limiter.replenishRate: 10
+              redis-rate-limiter.burstCapacity: 30
               key-resolver: "#{@ipKeyResolver}"
 
         - id: grade-attendance-service
@@ -85,12 +87,12 @@ resilience4j:
     instances:
       userServiceCircuitBreaker:
         registerHealthIndicator: true
-        slidingWindowSize: 10
-        minimumNumberOfCalls: 5
-        permittedNumberOfCallsInHalfOpenState: 3
+        slidingWindowSize: 15
+        minimumNumberOfCalls: 10
+        permittedNumberOfCallsInHalfOpenState: 5
         automaticTransitionFromOpenToHalfOpenEnabled: true
-        waitDurationInOpenState: 5s
-        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        failureRateThreshold: 40
         eventConsumerBufferSize: 10
 logging:
   level:
