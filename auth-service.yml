@@ -3,6 +3,8 @@ keycloak:
   domain: http://localhost:8080
   client-uuid: e737045f-f7f1-4b1e-83f3-1aa71425b9f3
   webhook-secret: Gq+zAzDljAtSWKC0gD9i8azCYAcXqUB3gsuOo4x+bDo=
+  group:
+    teacher-id: cb149d80-7b12-49d0-ac88-3032d0bb565b
   events:
     enabled: true
   ssl-required: external
