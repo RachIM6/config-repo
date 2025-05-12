@@ -38,16 +38,17 @@ spring:
       ddl-auto: update
     show-sql: true
   mail:
-    host: mailpit  # Docker service name
-    port: 1025     # Mailpit SMTP port
-    protocol: smtp
+    host: localhost  # Connect via host machine
+    port: 1025       # Mailpit's published SMTP port
     properties:
       mail:
         smtp:
           auth: false
-          starttls:
-            enable: false
-    test-connection: false
+          starttls.enable: false
+management:
+  health:
+    mail:
+      enabled: false
 
   # parse the roles from JWT
   security:
