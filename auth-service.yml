@@ -4,8 +4,8 @@ keycloak:
   client-uuid: e737045f-f7f1-4b1e-83f3-1aa71425b9f3
   webhook-secret: Gq+zAzDljAtSWKC0gD9i8azCYAcXqUB3gsuOo4x+bDo=
   group:
-    teacher-id: 9bbe2c45-333f-42c7-8466-b77ec288c3b8/cb149d80-7b12-49d0-ac88-3032d0bb565b
-    admin-id: 87b9fc24-e242-49d9-bf0f-3125cae8dad2/54f5c789-c9ba-426a-8a8e-67189b13304e
+    teacher-id: cb149d80-7b12-49d0-ac88-3032d0bb565b
+    admin-id: 54f5c789-c9ba-426a-8a8e-67189b13304e
   events:
     enabled: true
   ssl-required: external
