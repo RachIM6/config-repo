@@ -15,7 +15,8 @@ spring:
         - id: auth-service
           uri: lb://auth-service
           predicates:
-            - Path=/api/auth/**,/admins/**
+            - Path=/api/auth/**
+#            - ,/admins/**
             - Method=GET,POST,PUT,DELETE
           filters:
           - StripPrefix=2
