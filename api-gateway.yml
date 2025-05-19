@@ -53,6 +53,9 @@ spring:
           uri: lb://discovery-service
           predicates:
             - Path=/eureka/**
+  mvc:
+    servlet:
+      path: /api
 
   security:
     oauth2:
