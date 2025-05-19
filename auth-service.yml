@@ -26,8 +26,8 @@ keycloak:
 # Application specific configurations
 app:
   student-domain: ${APP_STUDENT_DOMAIN:gmail.com}
-  admin-domain: esmi.ma
-  teacher-domain: emsi.ma
+  admin-domain: ${APP_STUDENT_DOMAIN:emsi.ma}
+  teacher-domain: ${APP_STUDENT_DOMAIN:emsi.ma}
 
 # Logging configuration
 logging:
