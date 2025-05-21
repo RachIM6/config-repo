@@ -74,5 +74,5 @@ logging:
     org.springframework.cloud.gateway: DEBUG
     org.springframework.security: DEBUG
     org.springframework.security.oauth2: DEBUG
-    com.auth: DEBUG
+    com.schoolmanagement: INFO
     org.springframework.security.oauth2.server.resource.authentication: TRACE
