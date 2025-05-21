@@ -32,6 +32,9 @@ services:
   auth:
     url: http://localhost:8081
 
+resource-service:
+  url: ${RESOURCE_SERVICE_URL:http://localhost:8085}
+
 # Security configuration remains unchanged
 security:
   oauth2:
