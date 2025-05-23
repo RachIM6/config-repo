@@ -1,3 +1,25 @@
+user-management:
+  pagination:
+    default-page-size: 20
+    max-page-size: 100
+  email-notifications:
+    enabled: true
+    activation-template: "user-activation"
+    deactivation-template: "user-deactivation"
+  security:
+    admin-can-modify-roles:
+      - TEACHER
+      - PEDAGOGY
+    owner-can-modify-roles:
+      - ADMIN
+      - TEACHER
+      - PEDAGOGY
+    users-can-view-own-profile: true
+  filtering:
+    search-min-length: 2
+    search-max-results: 1000
+
+# Enhanced Keycloak Configuration
 keycloak:
   realm: Schools_Management
   domain: http://localhost:8080
@@ -7,6 +29,7 @@ keycloak:
     teacher-id: cb149d80-7b12-49d0-ac88-3032d0bb565b
     admin-id: 54f5c789-c9ba-426a-8a8e-67189b13304e
     pedagogy-id: 9bbe2c45-333f-42c7-8466-b77ec288c3b8
+    owner-id: ${KEYCLOAK_OWNER_GROUP_ID:owner-group-id}  # Add owner group
   events:
     enabled: true
   ssl-required: external
@@ -17,48 +40,60 @@ keycloak:
     auth: ${keycloak.domain}
   use-resource-role-mappings: true
   bearer-only: true
-#  Client Protocol: openid-connect
-#  Access Type: confidential  # Must be confidential for client credentials
-#  Service Accounts Enabled: ON
-#  Authorization Enabled: OFF
-#  Valid Redirect URIs: *
+  # Connection pool settings for better performance
+  connection-pool:
+    max-pool-size: 10
+    connection-timeout: 30000
+    read-timeout: 60000
 
-
-# Application specific configurations
+# Application specific configurations (updated)
 app:
   student-domain: ${APP_STUDENT_DOMAIN:gmail.com}
-  admin-domain: ${APP_STUDENT_DOMAIN:emsi.ma}
-  teacher-domain: ${APP_STUDENT_DOMAIN:emsi.ma}
+  admin-domain: ${APP_ADMIN_DOMAIN:emsi.ma}
+  teacher-domain: ${APP_TEACHER_DOMAIN:emsi.ma}
   department:
-    max-filiere-chefs: 10                    # Limit filière chefs per department
-    max-members: 100                         # Limit members per department
-    email-notifications-enabled: true       # Enable email notifications
+    max-filiere-chefs: 10
+    max-members: 100
+    email-notifications-enabled: true
     name-pattern: ^[A-Za-z0-9\\s]+$
-flyway:
-  enabled: true
-  locations: classpath:db/migration
-  baseline-on-migrate: true
-  validate-on-migrate: true
+  # Time zone configuration
+  time:
+    zone: ${APP_TIMEZONE:UTC+1}
+  # Audit configuration
+  audit:
+    enabled: true
+    retention-days: 365
+    track-login-attempts: true
 
-# Logging configuration
-logging:
-  level:
-    org.springframework.security: DEBUG
-    com.schoolmanagement: INFO
-  pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
-    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
-
-# Database configuration
+# Enhanced Database Configuration
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5433/users_db
     username: root
     password: root
+    # Connection pool settings
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      idle-timeout: 300000
+      max-lifetime: 1200000
+      connection-timeout: 20000
+      leak-detection-threshold: 60000
   jpa:
     hibernate:
-      ddl-auto: update
-    show-sql: true
+      ddl-auto: update # Use 'validate' in production
+    show-sql: false # Set to false in production
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: true
+        # Enable second-level cache
+        cache:
+          use_second_level_cache: true
+          use_query_cache: true
+          region:
+            factory_class: org.hibernate.cache.jcache.internal.JCacheRegionFactory
+  # Enhanced Mail Configuration
   mail:
     host: localhost
     port: 1025
@@ -71,8 +106,12 @@ spring:
           connectiontimeout: 5000
           timeout: 5000
           writetimeout: 5000
+    # Template configuration for HTML emails
+    template:
+      enabled: true
+      default-encoding: UTF-8
 
-  # parse the roles from JWT
+  # Security Configuration
   security:
     oauth2:
       resourceserver:
@@ -81,25 +120,59 @@ spring:
           issuer-uri: http://localhost:8080/realms/Schools_Management
           authorities-claim-name: realm_access.roles
           authority-prefix: ROLE_
+
+# Enhanced Flyway Configuration
+flyway:
+  enabled: true
+  locations: classpath:db/migration
+  baseline-on-migrate: true
+  validate-on-migrate: true
+  clean-disabled: true # Prevent accidental data loss in production
+  baseline-version: 1.0.0
+  baseline-description: "Initial baseline"
+
+# JWT Configuration
 jwt:
   secret: e1LQnjLrUPXhnbAFeufkAkpUkYhpieNu
+  expiration: 86400 # 24 hours in seconds
+  refresh-expiration: 604800 # 7 days in seconds
 
+# Enhanced Management/Actuator Configuration
 management:
   health:
     mail:
       enabled: false
+    db:
+      enabled: true
+    diskspace:
+      enabled: true
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus
+        include: health,info,metrics,prometheus,loggers
+      base-path: /actuator
     endpoint:
       health:
         show-details: when-authorized
-    metrics:
-      tags:
-        service: auth-service
-        feature: departments
+        show-components: always
+      loggers:
+        enabled: true
+  metrics:
+    tags:
+      service: auth-service
+      feature: user-management
+    export:
+      prometheus:
+        enabled: true
+  info:
+    env:
+      enabled: true
+    java:
+      enabled: true
+    os:
+      enabled: true
 
+# Enhanced SpringDoc/OpenAPI Configuration
 springdoc:
   api-docs:
     enabled: true
@@ -109,7 +182,226 @@ springdoc:
     path: /swagger-ui.html
     operations-sorter: method
     tags-sorter: alpha
+    doc-expansion: none
+    display-request-duration: true
+    filter: true
   show-actuator: false
+  group-configs:
+    - group: user-management
+      display-name: "User Management APIs"
+      paths-to-match:
+        - /users/**
+        - /admins/**
+        - /teachers/**
+        - /pedagogies/**
+    - group: department-management
+      display-name: "Department Management APIs"
+      paths-to-match:
+        - /departments/**
+    - group: auth
+      display-name: "Authentication APIs"
+      paths-to-match:
+        - /auth/**
+        - /keycloak-events/**
 
+# Enhanced Logging Configuration
+logging:
+  level:
+    org.springframework.security: INFO # Change to DEBUG for troubleshooting
+    com.auth.authservice: INFO
+    org.keycloak: WARN
+    org.hibernate.SQL: INFO # Change to DEBUG to see SQL queries
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN
+    org.springframework.web: INFO
+    root: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/auth-service.log
+    max-size: 10MB
+    max-history: 30
+
+# Server Configuration
 server:
   port: 8081
+  servlet:
+    context-path: /
+  compression:
+    enabled: true
+    mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
+  error:
+    include-message: always
+    include-binding-errors: always
+    include-stacktrace: on_param # Use 'never' in production
+    include-exception: false
+
+# Profile-specific configurations
+---
+spring:
+  config:
+    activate:
+      on-profile: development
+  jpa:
+    show-sql: true
+logging:
+  level:
+    org.springframework.security: DEBUG
+    com.auth.authservice: DEBUG
+    org.hibernate.SQL: DEBUG
+
+---
+spring:
+  config:
+    activate:
+      on-profile: production
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: validate
+  datasource:
+    hikari:
+      maximum-pool-size: 30
+logging:
+  level:
+    org.springframework.security: WARN
+    com.auth.authservice: INFO
+    org.hibernate.SQL: WARN
+    root: WARN
+server:
+  error:
+    include-stacktrace: never
+    include-exception: false
+
+---
+spring:
+  config:
+    activate:
+      on-profile: test
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    database-platform: org.hibernate.dialect.H2Dialect
+  h2:
+    console:
+      enabled: true
+#keycloak:
+#  realm: Schools_Management
+#  domain: http://localhost:8080
+#  client-uuid: e737045f-f7f1-4b1e-83f3-1aa71425b9f3
+#  webhook-secret: Gq+zAzDljAtSWKC0gD9i8azCYAcXqUB3gsuOo4x+bDo=
+#  group:
+#    teacher-id: cb149d80-7b12-49d0-ac88-3032d0bb565b
+#    admin-id: 54f5c789-c9ba-426a-8a8e-67189b13304e
+#    pedagogy-id: 9bbe2c45-333f-42c7-8466-b77ec288c3b8
+#  events:
+#    enabled: true
+#  ssl-required: external
+#  adminClientId: school-management
+#  adminClientSecret: e1LQnjLrUPXhnbAFeufkAkpUkYhpieNu
+#  client-id: school-management
+#  urls:
+#    auth: ${keycloak.domain}
+#  use-resource-role-mappings: true
+#  bearer-only: true
+##  Client Protocol: openid-connect
+##  Access Type: confidential  # Must be confidential for client credentials
+##  Service Accounts Enabled: ON
+##  Authorization Enabled: OFF
+##  Valid Redirect URIs: *
+#
+#
+## Application specific configurations
+#app:
+#  student-domain: ${APP_STUDENT_DOMAIN:gmail.com}
+#  admin-domain: ${APP_STUDENT_DOMAIN:emsi.ma}
+#  teacher-domain: ${APP_STUDENT_DOMAIN:emsi.ma}
+#  department:
+#    max-filiere-chefs: 10                    # Limit filière chefs per department
+#    max-members: 100                         # Limit members per department
+#    email-notifications-enabled: true       # Enable email notifications
+#    name-pattern: ^[A-Za-z0-9\\s]+$
+#flyway:
+#  enabled: true
+#  locations: classpath:db/migration
+#  baseline-on-migrate: true
+#  validate-on-migrate: true
+#
+## Logging configuration
+#logging:
+#  level:
+#    org.springframework.security: DEBUG
+#    com.schoolmanagement: INFO
+#  pattern:
+#    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+#    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+#
+## Database configuration
+#spring:
+#  datasource:
+#    url: jdbc:postgresql://localhost:5433/users_db
+#    username: root
+#    password: root
+#  jpa:
+#    hibernate:
+#      ddl-auto: update
+#    show-sql: true
+#  mail:
+#    host: localhost
+#    port: 1025
+#    protocol: smtp
+#    properties:
+#      mail:
+#        smtp:
+#          auth: false
+#          starttls.enable: false
+#          connectiontimeout: 5000
+#          timeout: 5000
+#          writetimeout: 5000
+#
+#  # parse the roles from JWT
+#  security:
+#    oauth2:
+#      resourceserver:
+#        jwt:
+#          jwk-set-uri: http://localhost:8080/realms/Schools_Management/protocol/openid-connect/certs
+#          issuer-uri: http://localhost:8080/realms/Schools_Management
+#          authorities-claim-name: realm_access.roles
+#          authority-prefix: ROLE_
+#jwt:
+#  secret: e1LQnjLrUPXhnbAFeufkAkpUkYhpieNu
+#
+#management:
+#  health:
+#    mail:
+#      enabled: false
+#  endpoints:
+#    web:
+#      exposure:
+#        include: health,info,metrics,prometheus
+#    endpoint:
+#      health:
+#        show-details: when-authorized
+#    metrics:
+#      tags:
+#        service: auth-service
+#        feature: departments
+#
+#springdoc:
+#  api-docs:
+#    enabled: true
+#    path: /v3/api-docs
+#  swagger-ui:
+#    enabled: true
+#    path: /swagger-ui.html
+#    operations-sorter: method
+#    tags-sorter: alpha
+#  show-actuator: false
+#
+#server:
+#  port: 8081
