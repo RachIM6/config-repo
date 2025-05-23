@@ -6,6 +6,7 @@ keycloak:
   group:
     teacher-id: cb149d80-7b12-49d0-ac88-3032d0bb565b
     admin-id: 54f5c789-c9ba-426a-8a8e-67189b13304e
+    pedagogy-id: 9bbe2c45-333f-42c7-8466-b77ec288c3b8
   events:
     enabled: true
   ssl-required: external
