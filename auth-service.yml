@@ -120,16 +120,28 @@ spring:
           issuer-uri: http://localhost:8080/realms/Schools_Management
           authorities-claim-name: realm_access.roles
           authority-prefix: ROLE_
+  redis:
+    host: localhost
+    port: 6379
+    password:  # Add if you have Redis password
+    database: 0  # Default is 0
+    connect-timeout: 5000
+    lettuce:
+      pool:
+        max-active: 20
+        max-idle: 10
+        min-idle: 3
+        max-wait: 5000
 
-# Enhanced Flyway Configuration
-flyway:
-  enabled: true
-  locations: classpath:db/migration
-  baseline-on-migrate: true
-  validate-on-migrate: true
-  clean-disabled: true # Prevent accidental data loss in production
-  baseline-version: 1.0.0
-  baseline-description: "Initial baseline"
+## Enhanced Flyway Configuration
+#flyway:
+#  enabled: true
+#  locations: classpath:db/migration
+#  baseline-on-migrate: true
+#  validate-on-migrate: true
+#  clean-disabled: true # Prevent accidental data loss in production
+#  baseline-version: 1.0.0
+#  baseline-description: "Initial baseline"
 
 # JWT Configuration
 jwt:
