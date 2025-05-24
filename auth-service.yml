@@ -65,6 +65,9 @@ app:
     retention-days: 365
     track-login-attempts: true
 
+  idempotency:
+    ttl-hours: 24
+
 # Enhanced Database Configuration
 spring:
   datasource:
