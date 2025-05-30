@@ -1,78 +1,166 @@
-server:
-  port: 8085
-
 spring:
+  application:
+    name: pedagogical-service
+
+  # Database Configuration
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5437}/${DB_NAME:resource_db?createDatabaseIfNotExist=true}
-    username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:root}
-    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:pedagogical_db}
+    username: ${POSTGRES_USER:root}
+    password: ${POSTGRES_PASSWORD:root}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  # JPA Configuration
   jpa:
     hibernate:
-      ddl-auto: update
-    show-sql: true
+      ddl-auto: ${DDL_AUTO:update}
     properties:
       hibernate:
-        format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
+        show_sql: false
+        format_sql: true
+    show-sql: false
 
-  # Security configuration
+  # Security Configuration
   security:
     oauth2:
       resourceserver:
         jwt:
-          jwk-set-uri: http://localhost:8080/realms/Schools_Management/protocol/openid-connect/certs
-          issuer-uri: http://localhost:8080/realms/Schools_Management
-          authorities-claim-name: realm_access.roles
-          authority-prefix: ROLE_
+          issuer-uri: ${KEYCLOAK_URL:http://localhost:8080}/realms/${KEYCLOAK_REALM:Schools_Management}
+          jwk-set-uri: ${KEYCLOAK_URL:http://localhost:8080}/realms/${KEYCLOAK_REALM:Schools_Management}/protocol/openid-connect/certs
+
+  # File Upload Configuration
   servlet:
     multipart:
-      enabled: true
-      max-file-size: 100MB
+      max-file-size: 50MB
       max-request-size: 100MB
 
-eureka:
-  client:
-    serviceUrl:
-      defaultZone: http://${EUREKA_HOST:localhost}:${EUREKA_PORT:8761}/eureka/
-    register-with-eureka: true
-    fetch-registry: true
-  instance:
-    prefer-ip-address: true
-    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
+  # Cloud Configuration (for service discovery)
+  cloud:
+    config:
+      enabled: ${CONFIG_ENABLED:false}
+      uri: ${CONFIG_SERVER_URL:http://localhost:8888}
+      username: ${CONFIG_USERNAME}
+      password: ${CONFIG_PASSWORD}
 
+# Server Configuration
+server:
+  port: ${SERVER_PORT:8085}
+  servlet:
+    context-path: /api
 
-# Document service settings
-document:
-  service:
-    url: ${DOCUMENT_SERVICE_URL:http://localhost:8086}
+# External Service URLs
+auth-service:
+  url: ${AUTH_SERVICE_URL:http://localhost:8081}
 
-AuthService:
-  url: ${USER_MANAGEMENT_URL:http://localhost:8081}
+document-service:
+  url: ${DOCUMENT_SERVICE_URL:http://localhost:8087}
 
-keycloak:
-  auth-server-url: http://localhost:8080
-  realm: Schools_Management
-  domain: http://localhost:8080
-  client-id: school-management
-  client-uuid: e737045f-f7f1-4b1e-83f3-1aa71425b9f3
-  webhook-secret: Gq+zAzDljAtSWKC0gD9i8azCYAcXqUB3gsuOo4x+bDo=
-  issuer-uri: ${keycloak.auth-server-url}/realms/${keycloak.realm}
-  group:
-    teacher-id: cb149d80-7b12-49d0-ac88-3032d0bb565b
-    admin-id: 54f5c789-c9ba-426a-8a8e-67189b13304e
-#  #  admin-username: useradmin
-#  #  admin-password: admin
-#  admin-username: ${KEYCLOAK_ADMIN_USERNAME}
-#  admin-password: ${KEYCLOAK_ADMIN_PASSWORD}
+# Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when_authorized
 
-application:
-  frontend-url: http://localhost:3000
-
+# Logging Configuration
 logging:
   level:
-    org.springframework.cloud.gateway: DEBUG
-    org.springframework.security: DEBUG
-    org.springframework.security.oauth2: DEBUG
-    com.schoolmanagement: INFO
-    org.springframework.security.oauth2.server.resource.authentication: TRACE
+    root: INFO
+    com.auth.resource_service: ${LOG_LEVEL:DEBUG}
+    org.springframework.security: WARN
+    org.springframework.web: INFO
+    org.hibernate.SQL: ${SQL_LOG_LEVEL:WARN}
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# Custom Application Properties
+app:
+  name: pedagogical Service
+  version: 1.0.0
+  description: Service for managing pedagogy
+#spring:
+#  datasource:
+#    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5437}/${DB_NAME:resource_db?createDatabaseIfNotExist=true}
+#    username: ${DB_USERNAME:root}
+#    password: ${DB_PASSWORD:root}
+#    driver-class-name: org.postgresql.Driver
+#  jpa:
+#    hibernate:
+#      ddl-auto: update
+#    show-sql: true
+#    properties:
+#      hibernate:
+#        format_sql: true
+#        dialect: org.hibernate.dialect.PostgreSQLDialect
+#
+#  # Security configuration
+#  security:
+#    oauth2:
+#      resourceserver:
+#        jwt:
+#          jwk-set-uri: http://localhost:8080/realms/Schools_Management/protocol/openid-connect/certs
+#          issuer-uri: http://localhost:8080/realms/Schools_Management
+#          authorities-claim-name: realm_access.roles
+#          authority-prefix: ROLE_
+#  servlet:
+#    multipart:
+#      enabled: true
+#      max-file-size: 100MB
+#      max-request-size: 100MB
+#
+#eureka:
+#  client:
+#    serviceUrl:
+#      defaultZone: http://${EUREKA_HOST:localhost}:${EUREKA_PORT:8761}/eureka/
+#    register-with-eureka: true
+#    fetch-registry: true
+#  instance:
+#    prefer-ip-address: true
+#    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
+#
+#
+## Document service settings
+#document:
+#  service:
+#    url: ${DOCUMENT_SERVICE_URL:http://localhost:8086}
+#
+#AuthService:
+#  url: ${USER_MANAGEMENT_URL:http://localhost:8081}
+#
+#keycloak:
+#  auth-server-url: http://localhost:8080
+#  realm: Schools_Management
+#  domain: http://localhost:8080
+#  client-id: school-management
+#  client-uuid: e737045f-f7f1-4b1e-83f3-1aa71425b9f3
+#  webhook-secret: Gq+zAzDljAtSWKC0gD9i8azCYAcXqUB3gsuOo4x+bDo=
+#  issuer-uri: ${keycloak.auth-server-url}/realms/${keycloak.realm}
+#  group:
+#    teacher-id: cb149d80-7b12-49d0-ac88-3032d0bb565b
+#    admin-id: 54f5c789-c9ba-426a-8a8e-67189b13304e
+##  #  admin-username: useradmin
+##  #  admin-password: admin
+##  admin-username: ${KEYCLOAK_ADMIN_USERNAME}
+##  admin-password: ${KEYCLOAK_ADMIN_PASSWORD}
+#
+#application:
+#  frontend-url: http://localhost:3000
+#
+#logging:
+#  level:
+#    org.springframework.cloud.gateway: DEBUG
+#    org.springframework.security: DEBUG
+#    org.springframework.security.oauth2: DEBUG
+#    com.schoolmanagement: INFO
+#    org.springframework.security.oauth2.server.resource.authentication: TRACE
