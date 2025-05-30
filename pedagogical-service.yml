@@ -4,7 +4,7 @@ spring:
 
   # Database Configuration
   datasource:
-    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:pedagogical_db}
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5437}/${POSTGRES_DB:pedagogical_db}
     username: ${POSTGRES_USER:root}
     password: ${POSTGRES_PASSWORD:root}
     hikari:
