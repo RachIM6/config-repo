@@ -16,14 +16,30 @@ spring:
 
   # JPA Configuration
   jpa:
+  hibernate:
+    ddl-auto: validate  # Change from update to avoid conflicts
+  properties:
     hibernate:
-      ddl-auto: ${DDL_AUTO:update}
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-        show_sql: false
-        format_sql: true
-    show-sql: false
+      dialect: org.hibernate.dialect.PostgreSQLDialect
+      show_sql: false
+      format_sql: true
+      jdbc:
+        batch_size: 20
+      order_inserts: true
+      order_updates: true
+  show-sql: false
+  sql:
+    init:
+      mode: never
+#  jpa:
+#    hibernate:
+#      ddl-auto: ${DDL_AUTO:update}
+#    properties:
+#      hibernate:
+#        dialect: org.hibernate.dialect.PostgreSQLDialect
+#        show_sql: false
+#        format_sql: true
+#    show-sql: false
 
   # Security Configuration
   security:
