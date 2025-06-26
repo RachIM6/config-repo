@@ -1,0 +1,193 @@
+# Requests Service Configuration
+# application.yml
+
+server:
+  port: 8082
+  servlet:
+    context-path: /
+
+spring:
+  application:
+    name: requests-service
+
+  # Database Configuration
+  datasource:
+    url: jdbc:postgresql://localhost:5432/requests_db
+    username: ${DB_USERNAME:requests_user}
+    password: ${DB_PASSWORD:requests_password}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  # JPA Configuration
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+
+  # Flyway Migration
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+  # File Upload Configuration
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 50MB
+      enabled: true
+
+  # Security Configuration
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8080/realms/school-management}
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:8080/realms/school-management/protocol/openid-connect/certs}
+
+  # Cache Configuration
+  cache:
+    type: simple
+    cache-names:
+      - requestStatistics
+      - userRequests
+      - adminDashboard
+
+# Service Discovery
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka}
+  instance:
+    prefer-ip-address: true
+    health-check-url-path: /actuator/health
+
+# External Service URLs
+services:
+  document-service:
+    url: ${DOCUMENT_SERVICE_URL:http://localhost:8083}
+    timeout: 30000
+  notification-service:
+    url: ${NOTIFICATION_SERVICE_URL:http://localhost:8085}
+    timeout: 10000
+
+# Requests Service Specific Configuration
+requests-service:
+  processing:
+    auto-assign-enabled: false
+    notifications-enabled: true
+    document-generation-enabled: true
+    max-attachments-per-request: 5
+    max-attachment-size-mb: 10
+    default-processing-timeout-days: 7
+    duplicate-request-check-enabled: true
+    allowed-attachment-types:
+      - application/pdf
+      - image/jpeg
+      - image/png
+      - application/msword
+      - application/vnd.openxmlformats-officedocument.wordprocessingml.document
+
+  documents:
+    document-service-url: ${DOCUMENT_SERVICE_URL:http://localhost:8083}
+    connection-timeout-ms: 30000
+    read-timeout-ms: 60000
+    fallback-enabled: true
+    max-retry-attempts: 3
+    retry-delay-ms: 1000
+    compression-enabled: true
+
+  notifications:
+    email-enabled: true
+    sms-enabled: false
+    push-notification-enabled: true
+    in-app-notification-enabled: true
+    email-template-prefix: request_
+    notification-retry-attempts: 3
+    notification-retry-delay-ms: 2000
+
+# Management Endpoints
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+# Logging Configuration
+logging:
+  level:
+    com.auth.requests_service: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type: TRACE
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/requests-service.log
+
+# Springdoc OpenAPI
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+---
+# Development Profile
+spring:
+  config:
+    activate:
+      on-profile: dev
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+logging:
+  level:
+    root: INFO
+    com.auth.requests_service: DEBUG
+
+---
+# Production Profile
+spring:
+  config:
+    activate:
+      on-profile: prod
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+
+logging:
+  level:
+    root: WARN
+    com.auth.requests_service: INFO
+
+requests-service:
+  processing:
+    notifications-enabled: true
+  notifications:
+    email-enabled: true
+    sms-enabled: true
