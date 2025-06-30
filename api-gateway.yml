@@ -53,6 +53,18 @@ spring:
           uri: lb://discovery-service
           predicates:
             - Path=/eureka/**
+
+        - id: requests-service
+          uri: lb://requests-service
+          predicates:
+            - Path=/api/requests/**
+          filters:
+            - StripPrefix=1
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 30
+                key-resolver: "#{@ipKeyResolver}"
   mvc:
     servlet:
       path: /api
