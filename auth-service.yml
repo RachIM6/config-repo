@@ -10,10 +10,14 @@ user-management:
     admin-can-modify-roles:
       - TEACHER
       - PEDAGOGY
+      - STUDENT
+      - ADMIN
+      - RECOVERYAGENT
+      - INTERNSHIPAGENT
+      - STUDENT
     owner-can-modify-roles:
       - ADMIN
-      - TEACHER
-      - PEDAGOGY
+      - SITERESPONSIBLE
     users-can-view-own-profile: true
   filtering:
     search-min-length: 2
@@ -25,11 +29,17 @@ keycloak:
   domain: http://localhost:8080
   client-uuid: e737045f-f7f1-4b1e-83f3-1aa71425b9f3
   webhook-secret: Gq+zAzDljAtSWKC0gD9i8azCYAcXqUB3gsuOo4x+bDo=
+  client-id: school-management
+  client-secret: e1LQnjLrUPXhnbAFeufkAkpUkYhpieNu
   group:
     teacher-id: cb149d80-7b12-49d0-ac88-3032d0bb565b
     admin-id: 54f5c789-c9ba-426a-8a8e-67189b13304e
     pedagogy-id: 9bbe2c45-333f-42c7-8466-b77ec288c3b8
-    owner-id: ${KEYCLOAK_OWNER_GROUP_ID:owner-group-id}  # Add owner group
+    owner-id: ${KEYCLOAK_OWNER_GROUP_ID:owner-group-id}
+    site-responsible-id: 12ace3b3-d630-471a-b489-5e770c3489b7
+    recovery-agents-id: 6c4059a4-90c8-4b4a-af39-409c4ceb5f8a
+    internship-agents-id: 1033c63a-51da-421c-8bbd-f9f0505e5a02
+    student-agents-id: ba472915-b0a0-4ac4-b187-e661e307dd0a
   events:
     enabled: true
   ssl-required: external
@@ -67,6 +77,11 @@ app:
 
   idempotency:
     ttl-hours: 24
+
+  app:
+    site:
+      code-pattern: "^[A-Z0-9_-]{2,10}$"  # Pattern for site codes
+      max-admins-per-site: 10
 
 # Enhanced Database Configuration
 spring:
